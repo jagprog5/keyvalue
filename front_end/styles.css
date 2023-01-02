@@ -1,0 +1,63 @@
+:root {
+    color-scheme: light dark;
+    --light-text-color: #222;
+    --light-bkg-color: #fff;
+    --light-link-color: #0033cc;
+    --dark-text-color: #eee;
+    --dark-bkg-color: #121212;
+    --dark-link-color: #809fff;
+}
+
+@media not (prefers-color-scheme: dark) {
+    :root { /* theme=default */
+        --initial-text-color: var(--light-text-color);
+        --initial-bkg-color: var(--light-bkg-color);
+        --initial-link-color: var(--light-link-color);
+        --toggled-text-color: var(--dark-text-color);
+        --toggled-bkg-color: var(--dark-bkg-color);
+        --toggled-link-color: var(--dark-link-color);
+    }
+    html[theme="toggled"] { /* set in pre-script.js */
+        --initial-text-color: var(--dark-text-color);
+        --initial-bkg-color: var(--dark-bkg-color);
+        --initial-link-color: var(--dark-link-color);
+        --toggled-text-color: var(--light-text-color);
+        --toggled-bkg-color: var(--light-bkg-color);
+        --toggled-link-color: var(--light-link-color);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root { /* theme=default */
+        --initial-text-color: var(--dark-text-color);
+        --initial-bkg-color: var(--dark-bkg-color);
+        --initial-link-color: var(--dark-link-color);
+        --toggled-text-color: var(--light-text-color);
+        --toggled-bkg-color: var(--light-bkg-color);
+        --toggled-link-color: var(--light-link-color);
+    }
+    html[theme="toggled"] {
+        --initial-text-color: var(--light-text-color);
+        --initial-bkg-color: var(--light-bkg-color);
+        --initial-link-color: var(--light-link-color);
+        --toggled-text-color: var(--dark-text-color);
+        --toggled-bkg-color: var(--dark-bkg-color);
+        --toggled-link-color: var(--dark-link-color);
+    }
+}
+
+* {
+    color: var(--initial-text-color);
+    background: var(--initial-bkg-color);
+}
+a {
+    color: var(--initial-link-color);
+}
+
+.toggled {
+    color: var(--toggled-text-color);
+    background: var(--toggled-bkg-color);
+}
+a.toggled {
+    color: var(--toggled-link-color);
+}
