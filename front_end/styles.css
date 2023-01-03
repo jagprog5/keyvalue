@@ -1,48 +1,72 @@
 :root {
     color-scheme: light dark;
     --light-text-color: #222;
-    --light-bkg-color: #fff;
+    --light-bkg-color: rgb(200, 200, 200);
     --light-link-color: #0033cc;
+    --light-theme-img: url('assets/light-theme.png');
+    --light-theme-hover-img: url('assets/light-theme-hover.png');
     --dark-text-color: #eee;
     --dark-bkg-color: #121212;
     --dark-link-color: #809fff;
+    --dark-theme-img: url('assets/dark-theme.png');
+    --dark-theme-hover-img: url('assets/dark-theme-hover.png');
 }
 
 @media not (prefers-color-scheme: dark) {
-    :root { /* theme=default */
+    :root {
+        /* theme=default */
         --initial-text-color: var(--light-text-color);
         --initial-bkg-color: var(--light-bkg-color);
         --initial-link-color: var(--light-link-color);
+        --initial-theme-image: var(--dark-theme-img);
+        --initial-theme-hover-image: var(--dark-theme-hover-img);
         --toggled-text-color: var(--dark-text-color);
         --toggled-bkg-color: var(--dark-bkg-color);
         --toggled-link-color: var(--dark-link-color);
+        --toggled-theme-image: var(--light-theme-img);
+        --toggled-theme-hover-image: var(--light-theme-hover-img);
     }
-    html[theme="toggled"] { /* set in pre-script.js */
+
+    /* set by pre-script.js */
+    html[theme="toggled"] {
         --initial-text-color: var(--dark-text-color);
         --initial-bkg-color: var(--dark-bkg-color);
         --initial-link-color: var(--dark-link-color);
+        --initial-theme-image: var(--light-theme-img);
+        --initial-theme-hover-image: var(--light-theme-hover-img);
         --toggled-text-color: var(--light-text-color);
         --toggled-bkg-color: var(--light-bkg-color);
         --toggled-link-color: var(--light-link-color);
+        --toggled-theme-image: var(--dark-theme-img);
+        --toggled-theme-hover-image: var(--dark-theme-hover-img);
     }
 }
 
 @media (prefers-color-scheme: dark) {
-    :root { /* theme=default */
+    :root {
         --initial-text-color: var(--dark-text-color);
         --initial-bkg-color: var(--dark-bkg-color);
         --initial-link-color: var(--dark-link-color);
+        --initial-theme-image: var(--light-theme-img);
+        --initial-theme-hover-image: var(--light-theme-hover-img);
         --toggled-text-color: var(--light-text-color);
         --toggled-bkg-color: var(--light-bkg-color);
         --toggled-link-color: var(--light-link-color);
+        --toggled-theme-image: var(--dark-theme-img);
+        --toggled-theme-hover-image: var(--dark-theme-hover-img);
     }
+
     html[theme="toggled"] {
         --initial-text-color: var(--light-text-color);
         --initial-bkg-color: var(--light-bkg-color);
         --initial-link-color: var(--light-link-color);
+        --initial-theme-image: var(--dark-theme-img);
+        --initial-theme-hover-image: var(--dark-theme-hover-img);
         --toggled-text-color: var(--dark-text-color);
         --toggled-bkg-color: var(--dark-bkg-color);
         --toggled-link-color: var(--dark-link-color);
+        --toggled-theme-image: var(--light-theme-img);
+        --toggled-theme-hover-image: var(--light-theme-hover-img);
     }
 }
 
@@ -50,6 +74,7 @@
     color: var(--initial-text-color);
     background: var(--initial-bkg-color);
 }
+
 a {
     color: var(--initial-link-color);
 }
@@ -58,6 +83,34 @@ a {
     color: var(--toggled-text-color);
     background: var(--toggled-bkg-color);
 }
+
 a.toggled {
     color: var(--toggled-link-color);
+}
+
+#theme-toggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: var(--initial-theme-image);
+    background-size: contain;
+    width: 40px;
+    height: 40px;
+    border: none; 
+    cursor: pointer;
+}
+
+#theme-toggle:hover {
+    background: var(--initial-theme-hover-image);
+    background-size: contain;
+}
+
+#theme-toggle.toggled {
+    background: var(--toggled-theme-image);
+    background-size: contain;
+}
+
+#theme-toggle.toggled:hover {
+    background: var(--toggled-theme-hover-image);
+    background-size: contain;
 }
