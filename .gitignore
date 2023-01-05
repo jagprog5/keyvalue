@@ -1,0 +1,14 @@
+secrets
+
+# preserve empty folders with presence of empty .gitignore files
+certbot/*
+
+!certbot/www
+certbot/www/*
+!certbot/www/.gitignore
+
+!certbot/conf
+certbot/conf/*
+!certbot/conf/live
+certbot/conf/live/*
+!certbot/conf/live/.gitignore
