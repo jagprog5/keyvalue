@@ -26,7 +26,7 @@ docker compose up
 rm -rf certbot/conf/live/keyvalue.duckdns.org/
 
 # generate the correct certificates from the CA
-docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d keyvalue.duckdns.org
+docker compose run --rm certbot certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d keyvalue.duckdns.org
 # if it is successful, then remove --dry-run and do it again
 
 # now restart docker compose and the certificate will be used!

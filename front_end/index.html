@@ -1,25 +1,49 @@
 <!DOCTYPE html>
 <html lang="en-US">
-  <head>
-    <script src="pre-script.js"></script>
-    <link rel="stylesheet" href="styles.css">
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Key-Value</title>
-  </head>
 
-  <body>
-    <button type="submit" id="theme-toggle"></button>
-    <center><font size="7">A Key-Value Server</font></center>
-    <center><small>Check out the code <a href="https://github.com/jagprog5/key-value">here</a>.</small></center>
-    <p>todo</p>
+<head>
+  <script src="pre-script.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Key-Value</title>
+</head>
+
+<body>
+  <button type="submit" id="theme-toggle"></button>
+  <center>
+    <font size="7">A Key-Value Server</font><br>
+    <small>Check out the code <a href="https://github.com/jagprog5/key-value">here</a>.</small>
+    <hr>
+    <p>Every entry is <span style="color:red;">deleted</span> one hour after creation. This is just a demo.</p>
     <form>
       <label for="username">Username:</label><br>
-      <input type="text" id="username" name="username"><br>
+      <input type="text" id="username" name="username", maxlength="32", size="34"><br>
+
       <label for="password">Password:</label><br>
-      <input type="password" id="password" name="password">
+      <input type="password" id="password" name="password", size="34"><br>
+
+      <label for="repeat-password">Repeat Password:</label><br>
+      <input type="password" id="repeat-password" name="repeat-password", size="34"><br>
+
+      <label for="key">Key:</label><br>
+      <input type="text" id="key" name="key", maxlength="32", size="34"><br>
     </form>
-    <script src="post-script.js"></script>
-  </body>
+  </center>
+  <br>
+  <div class="column left">
+    <!-- Column 1 content goes here -->
+    <h1>SET</h1>
+    <label for="value">Value:</label><br>
+    <input type="text" id="value" name="value", maxlength="32", size="34"><br><br>
+    <button id="set-btn">Set it!</button>
+  </div>
+  <div class="column">
+    <h1>GET</h1>
+    <button id="get-btn">Get it!</button>
+  </div>
+  <script src="post-script.js"></script>
+</body>
+
 </html>

@@ -114,3 +114,31 @@ a.toggled {
     background: var(--toggled-theme-hover-image);
     background-size: contain;
 }
+
+input {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.column {
+    width: 50%;
+    float: left;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.column.left {
+    border-right: 2px solid var(--initial-text-color);
+}
+
+.column.left.toggled {
+    border-right: 2px solid var(--toggled-text-color);
+}
+
+.warn {
+    background-color: orangered;
+}
+
+.error {
+    background-color: red;
+}
