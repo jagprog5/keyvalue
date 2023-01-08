@@ -3,13 +3,13 @@
     --light-text-color: #222;
     --light-bkg-color: rgb(200, 200, 200);
     --light-link-color: #0033cc;
-    --light-theme-img: url('assets/light-theme.png');
-    --light-theme-hover-img: url('assets/light-theme-hover.png');
+    --light-theme-img: url('../assets/light-theme.png');
+    --light-theme-hover-img: url('../assets/light-theme-hover.png');
     --dark-text-color: #eee;
     --dark-bkg-color: #121212;
     --dark-link-color: #809fff;
-    --dark-theme-img: url('assets/dark-theme.png');
-    --dark-theme-hover-img: url('assets/dark-theme-hover.png');
+    --dark-theme-img: url('../assets/dark-theme.png');
+    --dark-theme-hover-img: url('../assets/dark-theme-hover.png');
 }
 
 @media not (prefers-color-scheme: dark) {
