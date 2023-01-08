@@ -195,6 +195,21 @@ async fn get_value(
     }
 }
 
+async fn dropper(server_data: Data<ServerData>) {
+    use tokio::time::{self, Duration};
+    let mut interval = time::interval(Duration::from_secs(5));
+    interval.tick().await;
+    loop {
+        interval.tick().await;
+        let conn = &mut server_data.conn.lock().unwrap();
+        let mut stmt = conn.prepare_cached("
+        DELETE FROM user_auth WHERE timestamp <= datetime('now', '-1 minutes');
+        DELETE FROM key_values WHERE timestamp <= datetime('now', '-1 minutes');
+        ").unwrap();
+        stmt.execute(()).unwrap();
+    }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let default_db_path = "/db/db.db".to_owned();
@@ -237,13 +252,15 @@ async fn main() -> std::io::Result<()> {
     )
     .unwrap();
 
-    // 5 prepared queries: create account, login, get, set, validate_session_token
-    conn.set_prepared_statement_cache_capacity(5);
+    // 6 prepared queries: create account, login, get, set, validate_session_token, dropper
+    conn.set_prepared_statement_cache_capacity(6);
 
     let db_connection = ServerData {
         conn: Mutex::new(conn),
     };
     let server_data = Data::new(db_connection);
+
+    tokio::spawn(dropper(server_data.clone()));
 
     HttpServer::new(move || {
         App::new()
