@@ -50,7 +50,7 @@ async fn create_account(
     server_data: web::Data<ServerData>,
     request: web::Json<UserRequest>,
 ) -> HttpResponse {
-    if request.username.len() > 31 || request.password.len() > 31 {
+    if request.username.len() > 32 || request.password.len() > 32 {
         // enforcing frontend constraints also at the backend
         return HttpResponse::PayloadTooLarge().finish();
     }
@@ -59,12 +59,10 @@ async fn create_account(
     let session_token = uuid::Uuid::new_v4().to_string();
     let conn = &mut server_data.conn.lock().unwrap();
     let mut stmt = conn
-        .prepare_cached(
-            "
+        .prepare_cached("
             INSERT OR IGNORE INTO user_auth (username, password_hash, session_token)
-            VALUES (?, ?, ?)",
-        )
-        .unwrap();
+            VALUES (?, ?, ?)"
+        ).unwrap();
     match stmt.execute((
         request.username.as_str(),
         password_hash,
@@ -80,13 +78,13 @@ async fn create_account(
 }
 
 // check if the username and password hash combination exist
-// if it does, then set and return a session token
+// if it does, then set and return a session token, and update the timestamp
 #[post("/login")]
 async fn login(
     server_data: web::Data<ServerData>,
     request: web::Json<UserRequest>,
 ) -> HttpResponse {
-    if request.username.len() > 31 || request.password.len() > 31 {
+    if request.username.len() > 32 || request.password.len() > 32 {
         return HttpResponse::PayloadTooLarge().finish();
     }
 
@@ -96,10 +94,9 @@ async fn login(
     let mut stmt = conn
         .prepare_cached(
             "UPDATE user_auth
-            SET session_token = ?
-            WHERE username = ? AND password_hash = ?",
-        )
-        .unwrap();
+            SET session_token = ?, timestamp = CURRENT_TIMESTAMP
+            WHERE username = ? AND password_hash = ?
+        ").unwrap();
     match stmt.execute((
         session_token_string.as_str(),
         request.username.as_str(),
@@ -114,46 +111,53 @@ async fn login(
     }
 }
 
+// if the session is valid, then returns true and updates the timestamp
 fn is_session_valid(
     conn: &mut Connection,
     username: &str,
     session_token: &SessionToken,
 ) -> Result<bool, rusqlite::Error> {
-    let mut stmt = conn
-        .prepare_cached(
-            "
-        SELECT session_token from user_auth
-        WHERE username = ? AND session_token = ?",
-        )
-        .unwrap();
-    match stmt.query_row((username, session_token.to_string()), |_| Ok(())) {
-        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(false),
-        Ok(_) => Ok(true),
+    let mut stmt = conn.prepare_cached("
+        UPDATE user_auth
+        SET timestamp = CURRENT_TIMESTAMP
+        WHERE username = ? AND session_token = ?
+    ").unwrap();
+    match stmt.execute((
+        username,
+        session_token.to_string(),
+    )) {
         Err(e) => Err(e),
+        Ok(changes) => match changes {
+            0 => Ok(false),
+            1 => Ok(true),
+            // will never happen. some simple error type
+            _ => Err(rusqlite::Error::QueryReturnedNoRows),
+        },
     }
 }
 
+// checks session validity, then inserts or replaces the appropriate key, updating the timestamps
 #[post("/set-value")]
 async fn set_value(
     server_data: web::Data<ServerData>,
     request: web::Json<SetValueRequest>,
 ) -> HttpResponse {
     // deserialization of UUID already performed length check on session token
-    if request.username.len() > 31 || request.key.len() > 31 || request.value.len() > 31 {
+    if request.username.len() > 32 || request.key.len() > 32 || request.value.len() > 32 {
         return HttpResponse::PayloadTooLarge().finish();
     }
     let conn = &mut server_data.conn.lock().unwrap();
+
     match is_session_valid(conn, &request.username, &request.session_token) {
         Err(_) => HttpResponse::InternalServerError().finish(),
         Ok(false) => HttpResponse::BadRequest().finish(),
         Ok(true) => {
             let mut stmt = conn
-                .prepare_cached(
-                    "
-            INSERT OR REPLACE INTO key_values (username, key, value)
-            VALUES(?, ?, ?)
-            ",
-                )
+                // this refreshes the timestamp as well
+                .prepare_cached("
+                    INSERT OR REPLACE INTO key_values (username, key, value)
+                    VALUES(?, ?, ?)
+                ")
                 .unwrap();
             match stmt.execute((
                 request.username.as_str(),
@@ -173,7 +177,7 @@ async fn get_value(
     request: web::Json<GetValueRequest>,
 ) -> HttpResponse {
     // deserialization of UUID already performed length check on session token
-    if request.username.len() > 31 || request.key.len() > 31 {
+    if request.username.len() > 32 || request.key.len() > 32 {
         return HttpResponse::PayloadTooLarge().finish();
     }
     let conn = &mut server_data.conn.lock().unwrap();
@@ -181,9 +185,12 @@ async fn get_value(
         Err(_) => HttpResponse::InternalServerError().finish(),
         Ok(false) => HttpResponse::BadRequest().finish(),
         Ok(true) => {
-            let mut stmt = conn
-                .prepare_cached("SELECT value FROM key_values WHERE username = ? AND key = ?")
-                .unwrap();
+            let mut stmt = conn.prepare_cached("
+                UPDATE key_values
+                SET timestamp = CURRENT_TIMESTAMP
+                WHERE username = ? and key = ?
+                RETURNING value
+            ").unwrap();
             match stmt.query_row((request.username.as_str(), request.key.as_str()), |row| {
                 Ok(row.get::<usize, String>(0).unwrap())
             }) {
@@ -197,14 +204,13 @@ async fn get_value(
 
 async fn dropper(server_data: Data<ServerData>) {
     use tokio::time::{self, Duration};
-    let mut interval = time::interval(Duration::from_secs(5));
-    interval.tick().await;
+    let mut interval = time::interval(Duration::from_secs(60));
     loop {
         interval.tick().await;
         let conn = &mut server_data.conn.lock().unwrap();
         let mut stmt = conn.prepare_cached("
-        DELETE FROM user_auth WHERE timestamp <= datetime('now', '-1 minutes');
-        DELETE FROM key_values WHERE timestamp <= datetime('now', '-1 minutes');
+        DELETE FROM user_auth WHERE timestamp <= datetime('now', '-1 hours');
+        DELETE FROM key_values WHERE timestamp <= datetime('now', '-1 hours');
         ").unwrap();
         stmt.execute(()).unwrap();
     }
