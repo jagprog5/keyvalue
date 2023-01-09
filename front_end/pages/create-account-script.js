@@ -55,13 +55,13 @@ function createAccountButtonOnClick() {
     xhr.send(JSON.stringify(requestBody));
 }
 
-repeatPasswordInput.addEventListener('keydown', function (event) {
+repeatPasswordInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         createAccountButtonOnClick();
     }
 });
 
-usernameInput.addEventListener('input', function () {
+usernameInput.addEventListener('input', () => {
     usernameInput.classList.remove('error');
 });
 

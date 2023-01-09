@@ -2,8 +2,9 @@
 <html lang="en">
 
 <head>
-    <script src="/all-pages/pre-script.js"></script>
-    <link rel="stylesheet" href="/all-pages/styles.css">
+    <script src="/global/pre-script.js"></script>
+    <link rel="stylesheet" href="/global/style.css">
+    <link rel="stylesheet" href="/pages/set-get-page-style.css">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,22 +12,24 @@
 </head>
 
 <body>
-    <script src="/all-pages/header-html.js"></script>
+    <script src="/global/header-html.js"></script>
     <center>
-        <label for="key-input">Key:</label><br>
-        <input type="text" id="key-input" name="key", maxlength="32", size="34"><br><br>
+        <label>Key:</label><br>
+        <input type="text", id="key-input", maxlength="32", size="34"><br><br>
     </center>
     <div class="column left">
         <h1>SET</h1>
-        <label for="value-input">Value:</label><br>
-        <input type="text" id="value-input" name="value" , maxlength="32", size="34"><br>
-        <button type="button" id="set-button">Set it!</button>
+        <label>Value:</label><br>
+        <input type="text", id="value-input", maxlength="32", size="34", style="max-width: 50%;"><br>
+        <button type="button" id="set-button">Set it!</button><br>
+        <label id="success-label", style="color:rgba(0, 255, 0); opacity: 0">Success!</label><br>
     </div>
     <div class="column">
         <h1>GET</h1>
-        <button type="button" id="get-button">Get it!</button>
+        <button type="button" id="get-button">Get it!</button><br><br>
+        <label id="output-label"></label><br>
     </div>
-    <script src="/all-pages/header-script.js"></script>
+    <script src="/global/header-script.js"></script>
     <script src="/pages/set-get-script.js"></script>
 </body>
 </html>

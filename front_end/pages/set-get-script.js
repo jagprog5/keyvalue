@@ -2,8 +2,11 @@ const keyInput = document.getElementById('key-input');
 const valueInput = document.getElementById('value-input');
 const getButton = document.getElementById('get-button');
 const setButton = document.getElementById('set-button');
+const successLabel = document.getElementById('success-label');
+const outputLabel = document.getElementById('output-label');
 
 function setButtonOnClick() {
+    outputLabel.innerText = "";
     let sessionToken = sessionStorage.getItem("sessionToken");
     let username = sessionStorage.getItem("username");
     if (sessionToken == null || username == null) {
@@ -25,7 +28,15 @@ function setButtonOnClick() {
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = () => {
         if (xhr.status == 200) {
-            alert("good");
+            valueInput.value = "";
+            successLabel.style.opacity = 1;
+            const fadeEffect = setInterval(() => {
+                if (successLabel.style.opacity > 0) {
+                    successLabel.style.opacity = parseFloat(successLabel.style.opacity) - 0.01;
+                } else {
+                    clearInterval(fadeEffect);
+                }
+            }, 10);
         } else if (xhr.status == 400) {
             location.href = "/"; // sessionToken was invalid. get a new one
         } else {
@@ -41,7 +52,7 @@ function setButtonOnClick() {
     xhr.send(JSON.stringify(requestBody));
 }
 
-valueInput.addEventListener('keydown', function (event) {
+valueInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         setButtonOnClick();
     }
@@ -67,7 +78,18 @@ function getButtonOnClick() {
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = () => {
         if (xhr.status == 200) {
-            alert(xhr.responseText);
+            outputLabel.style.opacity = 1;
+            setTimeout(() => {
+                const fadeEffect = setInterval(() => {
+                    if (outputLabel.style.opacity > 0) {
+                        outputLabel.style.opacity = parseFloat(outputLabel.style.opacity) - 0.01;
+                    } else {
+                        clearInterval(fadeEffect);
+                        outputLabel.innerText = "";
+                    }
+                }, 10);
+            }, 60000)
+            outputLabel.innerText = xhr.responseText;
         } else if (xhr.status == 400) {
             location.href = "/"; // sessionToken was invalid. get a new one
         } else if (xhr.status == 404) {
@@ -85,7 +107,7 @@ function getButtonOnClick() {
     xhr.send(JSON.stringify(requestBody));
 }
 
-keyInput.addEventListener('keydown', function (event) {
+keyInput.addEventListener('keydown',  (event) => {
     if (event.key === 'Enter') {
         getButtonOnClick();
     }
@@ -93,11 +115,13 @@ keyInput.addEventListener('keydown', function (event) {
 
 getButton.addEventListener('click', getButtonOnClick);
 
-valueInput.addEventListener('input', function () {
+valueInput.addEventListener('input',  () => {
+    outputLabel.innerText = "";
     valueInput.classList.remove('error');
 });
 
-keyInput.addEventListener('input', function () {
+keyInput.addEventListener('input', () => {
+    outputLabel.innerText = "";
     valueInput.classList.remove('error');
     keyInput.classList.remove('error');
 });

@@ -1,0 +1,14 @@
+.column {
+    width: 50%;
+    float: left;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.column.left {
+    border-right: 2px solid var(--initial-text-color);
+}
+
+.column.left.toggled {
+    border-right: 2px solid var(--toggled-text-color);
+}

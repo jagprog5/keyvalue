@@ -44,7 +44,7 @@ function loginButtonOnClick() {
   xhr.send(JSON.stringify(requestBody));
 }
 
-passwordInput.addEventListener('keydown', function(event) {
+passwordInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
     loginButtonOnClick();
   }
@@ -52,7 +52,7 @@ passwordInput.addEventListener('keydown', function(event) {
 
 loginButton.addEventListener('click', loginButtonOnClick);
 
-createAccountButton.addEventListener('click', function(){
+createAccountButton.addEventListener('click', () => {
   clearErrors();
   if (usernameInput.value.length != 0) {
     sessionStorage.setItem("username", usernameInput.value);

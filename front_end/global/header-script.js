@@ -11,7 +11,7 @@ darkPreload.src = '/assets/dark-theme.png';
 darkHoverPreload.src = '/assets/dark-theme-hover.png';
 
 const themeToggleBtn = document.getElementById('theme-toggle');
-themeToggleBtn.addEventListener('click', function () {
+themeToggleBtn.addEventListener('click', () => {
   theme = theme == TOGGLED ? DEFAULT : TOGGLED;
   localStorage.setItem(THEME, theme);
 

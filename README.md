@@ -1,6 +1,35 @@
 # Key Value Server
 
-## Initialization
+The server is self hosted and should be live at [keyvalue.duckdns.org](https://keyvalue.duckdns.org).
+
+## Back End
+
+The back end server is written in rust and interfaces with a sqlite database. It exposes four http endpoints:
+
+- `/login` and `/create-account`  
+  POST json: `{ "username": "...", "password", "..." }`  
+  Yields a session token in the form of a uuid, which is used when setting and getting values.
+- `/set-value`  
+  POST json:  
+  `{ "username": "...", "session_token": "79997094-a636-4220-87ae-7d42c1412ae7", "key": "...", "value": "value" }`
+- `/get-value`  
+  POST json:  
+  `{ "username": "...", "session_token": "79997094-a636-4220-87ae-7d42c1412ae7", "key": "..." }`  
+  Yields the plaintext value.
+
+The database stores the salted password hashes and sessions associated with each user. Since this is a code demo, entries that have been inactive for an hour get purposefully dropped.
+
+## Front End
+
+The front end is JS, CSS, and HTML, statically served by nginx. It has three pages
+
+- login page
+- create account page
+- set get page
+
+nginx also provides a TLS terminating ingress using an tls certificate verified via [let's encrypt](https://letsencrypt.org/).
+
+## Initialization Steps
 
 inspired from [here](https://github.com/wmnnd/nginx-certbot/blob/master/init-letsencrypt.sh).
 
