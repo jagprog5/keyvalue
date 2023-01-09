@@ -4,20 +4,39 @@ The server is self hosted and should be live at [keyvalue.duckdns.org](https://k
 
 ## Back End
 
-The back end server is written in rust and interfaces with a sqlite database. It exposes four http endpoints:
+The back end server is written in rust and interfaces with an sqlite database. It exposes four http endpoints:
 
 - `/login` and `/create-account`  
-  POST json: `{ "username": "...", "password", "..." }`  
+  POST json:
+  ```json
+  {
+    "username": "...",
+    "password": "..."
+  }
+  ```
   Yields a session token in the form of a uuid, which is used when setting and getting values.
 - `/set-value`  
   POST json:  
-  `{ "username": "...", "session_token": "79997094-a636-4220-87ae-7d42c1412ae7", "key": "...", "value": "value" }`
+  ```json
+  {
+    "username": "...",
+    "session_token": "79997094-a636-4220-87ae-7d42c1412ae7",
+    "key": "...",
+    "value": "value"
+  }
+  ```
 - `/get-value`  
   POST json:  
-  `{ "username": "...", "session_token": "79997094-a636-4220-87ae-7d42c1412ae7", "key": "..." }`  
+  ```json  
+  {
+    "username": "...",
+    "session_token": "79997094-a636-4220-87ae-7d42c1412ae7",
+    "key": "...",
+  }
+  ```
   Yields the plaintext value.
 
-The database stores the salted password hashes and sessions associated with each user. Since this is a code demo, entries that have been inactive for an hour get purposefully dropped.
+The database stores the salted password hashes and sessions associated with each user. Since this is a demo, entries that have been inactive for an hour get purposefully dropped.
 
 ## Front End
 
@@ -27,7 +46,7 @@ The front end is JS, CSS, and HTML, statically served by nginx. It has three pag
 - create account page
 - set get page
 
-nginx also provides a TLS terminating ingress using an tls certificate verified via [let's encrypt](https://letsencrypt.org/).
+nginx also provides a TLS terminating ingress using a tls certificate verified via [let's encrypt](https://letsencrypt.org/).
 
 ## Initialization Steps
 
@@ -63,5 +82,10 @@ docker compose run --rm certbot certonly --webroot --webroot-path /var/www/certb
 # also, remember to get cron to run the duckdns script:
 */20 * * * * /path/to/duck.sh >/dev/null 2>&1 # script handles writing logs
 # renewing the certificate is already done in the certbot container entrypoint
+
+# finally, wrap the entire setup in systemd as recommended here:
+# move the .service appropriately and:
+systemctl enable keyvalue-app.service
+systemctl start keyvalue-app.service
 
 ```
