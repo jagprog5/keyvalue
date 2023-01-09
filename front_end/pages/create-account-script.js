@@ -44,6 +44,8 @@ function createAccountButtonOnClick() {
             alert('Username already exists.');
         } else if (xhr.status == 400) {
             alert('Incorrect or expired username or password');
+        } else if (xhr.status == 503) {
+            alert('Rate limit reached');
         } else {
             alert('Err:' + xhr.status);
         }

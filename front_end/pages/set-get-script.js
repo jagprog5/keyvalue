@@ -39,6 +39,8 @@ function setButtonOnClick() {
             }, 10);
         } else if (xhr.status == 400) {
             location.href = "/"; // sessionToken was invalid. get a new one
+        } else if (xhr.status == 503) {
+            alert('Rate limit reached');
         } else {
             alert('Err:' + xhr.status);
         }
@@ -94,6 +96,8 @@ function getButtonOnClick() {
             location.href = "/"; // sessionToken was invalid. get a new one
         } else if (xhr.status == 404) {
             alert("key does not exist")
+        } else if (xhr.status == 503) {
+            alert('Rate limit reached');
         } else {
             alert('Err:' + xhr.status);
         }
@@ -107,7 +111,7 @@ function getButtonOnClick() {
     xhr.send(JSON.stringify(requestBody));
 }
 
-keyInput.addEventListener('keydown',  (event) => {
+keyInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         getButtonOnClick();
     }
@@ -115,7 +119,7 @@ keyInput.addEventListener('keydown',  (event) => {
 
 getButton.addEventListener('click', getButtonOnClick);
 
-valueInput.addEventListener('input',  () => {
+valueInput.addEventListener('input', () => {
     outputLabel.innerText = "";
     valueInput.classList.remove('error');
 });
