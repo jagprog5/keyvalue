@@ -18,27 +18,51 @@ function checkMatching() {
 passwordInput.addEventListener('input', checkMatching);
 repeatPasswordInput.addEventListener('input', checkMatching);
 
-usernameInput.addEventListener('input', function () {
-    usernameInput.classList.remove('error');
-});
-
-createAccountButton.addEventListener('click', function () {
+function createAccountButtonOnClick() {
     let fieldsGood = true;
     if (usernameInput.value.length == 0) {
         usernameInput.classList.add('error');
         fieldsGood = false;
     }
+    sessionStorage.setItem("username", usernameInput.value);
     if (passwordInput.value != repeatPasswordInput.value
         || passwordInput.value.length == 0) {
         passwordInput.classList.add('error');
         repeatPasswordInput.classList.add('error');
         fieldsGood = false;
     }
-    if (fieldsGood) {
-        // post it to the server and see if the account creation is successfull
-        let serverGood = true;
-        // account creation successful
-        // set session storage as if the user logged in, and redirect
-        location.href = "/pages/set-get-page.html";
+    if (!fieldsGood) { return; }
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/create-account');
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = () => {
+        if (xhr.status == 200) {
+            const sessionToken = xhr.responseText;
+            sessionStorage.setItem("sessionToken", sessionToken);
+            location.href = "/pages/set-get-page.html";
+        } else if (xhr.status == 409) {
+            alert('Username already exists.');
+        } else if (xhr.status == 400) {
+            alert('Incorrect or expired username or password');
+        } else {
+            alert('Err:' + xhr.status);
+        }
+    }
+    const requestBody = {
+        username: usernameInput.value,
+        password: passwordInput.value,
+    };
+    xhr.send(JSON.stringify(requestBody));
+}
+
+repeatPasswordInput.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        createAccountButtonOnClick();
     }
 });
+
+usernameInput.addEventListener('input', function () {
+    usernameInput.classList.remove('error');
+});
+
+createAccountButton.addEventListener('click', createAccountButtonOnClick);

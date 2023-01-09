@@ -1,3 +1,4 @@
+version: "3"
 services:
   webserver:
     image: nginx:latest
@@ -17,6 +18,7 @@ services:
       - ./certbot/conf/:/etc/letsencrypt/:rw
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
   db:
+    restart: always
     build:
       context: ./backend/
       dockerfile: Dockerfile

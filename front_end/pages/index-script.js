@@ -11,22 +11,51 @@ function clearErrors() {
 usernameInput.addEventListener('input', clearErrors);
 passwordInput.addEventListener('input', clearErrors);
 
-createAccountButton.addEventListener('click', function(){
-  clearErrors();
-  location.href = "/pages/create-account.html";
-});
-
-loginButton.addEventListener('click', function () {
-  let good = true;
+function loginButtonOnClick() {
+  let fieldsGood = true;
   if (usernameInput.value.length == 0) {
     usernameInput.classList.add('error');
-    good = false;
+    fieldsGood = false;
   }
+  sessionStorage.setItem("username", usernameInput.value);
   if (passwordInput.value.length == 0) {
     passwordInput.classList.add('error');
-    good = false;
+    fieldsGood = false;
   }
-  if (good) {
-    alert('send login!');
+  if (!fieldsGood) { return; }
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/login');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = () => {
+    if (xhr.status == 200) {
+      const sessionToken = xhr.responseText;
+      sessionStorage.setItem("sessionToken", sessionToken);
+      location.href = "/pages/set-get-page.html";
+    } else if (xhr.status == 400) {
+      alert('Incorrect or expired username or password');
+    } else {
+      alert('Err:' + xhr.status);
+    }
   }
+  const requestBody = {
+    username: usernameInput.value,
+    password: passwordInput.value,
+  };
+  xhr.send(JSON.stringify(requestBody));
+}
+
+passwordInput.addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    loginButtonOnClick();
+  }
+});
+
+loginButton.addEventListener('click', loginButtonOnClick);
+
+createAccountButton.addEventListener('click', function(){
+  clearErrors();
+  if (usernameInput.value.length != 0) {
+    sessionStorage.setItem("username", usernameInput.value);
+  }
+  location.href = "/pages/create-account.html";
 });

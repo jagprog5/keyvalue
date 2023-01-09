@@ -71,7 +71,7 @@ async fn create_account(
         Err(_) => HttpResponse::InternalServerError().finish(),
         Ok(changes) => match changes {
             0 => HttpResponse::Conflict().finish(),
-            1 => HttpResponse::Created().body(session_token),
+            1 => HttpResponse::Ok().body(session_token),
             _ => HttpResponse::InternalServerError().finish(),
         },
     }
@@ -105,13 +105,13 @@ async fn login(
         Err(_) => HttpResponse::InternalServerError().finish(),
         Ok(changes) => match changes {
             0 => HttpResponse::BadRequest().finish(),
-            1 => HttpResponse::Created().body(session_token_string),
+            1 => HttpResponse::Ok().content_type("text/plain").body(session_token_string),
             _ => HttpResponse::InternalServerError().finish(),
         },
     }
 }
 
-// if the session is valid, then returns true and updates the timestamp
+// if the session is valid, then returns true and update the timestamp
 fn is_session_valid(
     conn: &mut Connection,
     username: &str,
@@ -171,6 +171,7 @@ async fn set_value(
     }
 }
 
+// checks session validity, returns the appropriate value, updating the timestamps
 #[post("/get-value")]
 async fn get_value(
     server_data: web::Data<ServerData>,
@@ -196,7 +197,7 @@ async fn get_value(
             }) {
                 Err(rusqlite::Error::QueryReturnedNoRows) => HttpResponse::NotFound().finish(),
                 Err(_) => HttpResponse::InternalServerError().finish(),
-                Ok(val) => HttpResponse::Ok().body(val),
+                Ok(val) => HttpResponse::Ok().content_type("text/plain").body(val),
             }
         }
     }
