@@ -52,6 +52,12 @@ passwordInput.addEventListener('keydown', (event) => {
   }
 });
 
+usernameInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    loginButtonOnClick();
+  }
+});
+
 loginButton.addEventListener('click', loginButtonOnClick);
 
 createAccountButton.addEventListener('click', () => {

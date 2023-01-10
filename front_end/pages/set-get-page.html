@@ -15,18 +15,18 @@
     <script src="/global/header-html.js"></script>
     <center>
         <label>Key:</label><br>
-        <input type="text", id="key-input", maxlength="32", size="34"><br><br>
+        <input type="text" id="key-input" maxlength="32" size="40" tabindex="1"><br><br>
     </center>
     <div class="column left">
         <h1>SET</h1>
         <label>Value:</label><br>
-        <input type="text", id="value-input", maxlength="32", size="34", style="max-width: 50%;"><br>
-        <button type="button" id="set-button">Set it!</button><br>
-        <label id="success-label", style="color:rgba(0, 255, 0); opacity: 0">Success!</label><br>
+        <input type="text" id="value-input" maxlength="32" size="40" style="max-width: 50%;" tabindex="2"><br>
+        <button type="button" id="set-button" tabindex="3">Set it!</button><br>
+        <label id="success-label" style="color:rgba(0, 255, 0); opacity: 0">Success!</label><br>
     </div>
     <div class="column">
         <h1>GET</h1>
-        <button type="button" id="get-button">Get it!</button><br><br>
+        <button type="button" id="get-button" tabindex="4">Get it!</button><br><br>
         <label id="output-label"></label><br>
     </div>
     <script src="/global/header-script.js"></script>

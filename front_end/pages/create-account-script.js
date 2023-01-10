@@ -1,9 +1,9 @@
 // if password and repeat don't match, colorize for feedback
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
+const repeatPasswordInput = document.getElementById('repeat-password-input');
 const createAccountButton = document.getElementById('create-account-button');
 
-const repeatPasswordInput = document.getElementById('repeat-password-input');
 function checkMatching() {
     passwordInput.classList.remove('error');
     repeatPasswordInput.classList.remove('error');
@@ -18,6 +18,11 @@ function checkMatching() {
 passwordInput.addEventListener('input', checkMatching);
 repeatPasswordInput.addEventListener('input', checkMatching);
 
+usernameInput.addEventListener('input', () => {
+    usernameInput.classList.remove('error');
+});
+
+
 function createAccountButtonOnClick() {
     let fieldsGood = true;
     if (usernameInput.value.length == 0) {
@@ -25,12 +30,25 @@ function createAccountButtonOnClick() {
         fieldsGood = false;
     }
     sessionStorage.setItem("username", usernameInput.value);
-    if (passwordInput.value != repeatPasswordInput.value
-        || passwordInput.value.length == 0) {
+
+    let passFieldEmpty = false;
+    if (passwordInput.value.length == 0) {
         passwordInput.classList.add('error');
+        fieldsGood = false;
+        passFieldEmpty = true;
+    }
+
+    if (repeatPasswordInput.value.length == 0) {
+        repeatPasswordInput.classList.add('error');
+        fieldsGood = false;
+        passFieldEmpty = true;
+    }
+
+    if (!passFieldEmpty && passwordInput.value != repeatPasswordInput.value) {
         repeatPasswordInput.classList.add('error');
         fieldsGood = false;
     }
+
     if (!fieldsGood) { return; }
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/create-account');
@@ -57,14 +75,13 @@ function createAccountButtonOnClick() {
     xhr.send(JSON.stringify(requestBody));
 }
 
-repeatPasswordInput.addEventListener('keydown', (event) => {
+function inputKeyDownHandle(event) {
     if (event.key === 'Enter') {
         createAccountButtonOnClick();
     }
-});
+}
 
-usernameInput.addEventListener('input', () => {
-    usernameInput.classList.remove('error');
-});
-
+usernameInput.addEventListener('keydown', inputKeyDownHandle);
+passwordInput.addEventListener('keydown', inputKeyDownHandle);
+repeatPasswordInput.addEventListener('keydown', inputKeyDownHandle);
 createAccountButton.addEventListener('click', createAccountButtonOnClick);
