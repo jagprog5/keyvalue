@@ -16,7 +16,9 @@ services:
     volumes:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
-    restart: always
+    # comment out entrypoint during initialization phase (mentioned in README)
+    # or else it will clash with the certbot creation command.
+    # uncomment during normal use
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
   db:
     restart: always
