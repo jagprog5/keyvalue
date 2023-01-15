@@ -4,7 +4,7 @@ use std::env;
 use std::hash::{Hash, Hasher};
 
 // App, HttpResponse, HttpServer
-use actix_web::{post, web, web::Data, App, HttpResponse, HttpServer};
+use actix_web::{post, put, web, web::Data, App, HttpResponse, HttpServer};
 use serde::Deserialize;
 use std::sync::Mutex;
 use uuid::Uuid;
@@ -79,7 +79,7 @@ async fn create_account(
 
 // check if the username and password hash combination exist
 // if it does, then set and return a session token, and update the timestamp
-#[post("/login")]
+#[put("/login")]
 async fn login(
     server_data: web::Data<ServerData>,
     request: web::Json<UserRequest>,
@@ -137,7 +137,7 @@ fn is_session_valid(
 }
 
 // checks session validity, then inserts or replaces the appropriate key, updating the timestamps
-#[post("/set-value")]
+#[put("/set-value")]
 async fn set_value(
     server_data: web::Data<ServerData>,
     request: web::Json<SetValueRequest>,
@@ -172,7 +172,7 @@ async fn set_value(
 }
 
 // checks session validity, returns the appropriate value, updating the timestamps
-#[post("/get-value")]
+#[put("/get-value")]
 async fn get_value(
     server_data: web::Data<ServerData>,
     request: web::Json<GetValueRequest>,

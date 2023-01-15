@@ -24,7 +24,7 @@ function loginButtonOnClick() {
   }
   if (!fieldsGood) { return; }
   const xhr = new XMLHttpRequest();
-  xhr.open('POST', '/login');
+  xhr.open('PUT', '/login');
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.onload = () => {
     if (xhr.status == 200) {

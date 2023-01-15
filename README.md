@@ -6,17 +6,26 @@ The server is self hosted and should be live at [keyvalue.ca](http://www.keyvalu
 
 The back end server is written in rust and interfaces with an sqlite database. It exposes four http endpoints:
 
-- `/login` and `/create-account`  
-  POST json:
+- `/create-account`  
+  POST json:  
+  Yields a session token. Same as if logging in.
   ```json
   {
     "username": "...",
     "password": "..."
   }
   ```
+- `/login`  
+  PUT json:  
   Yields a session token in the form of a uuid, which is used when setting and getting values.
+  ```json
+  {
+    "username": "...",
+    "password": "..."
+  }
+  ```
 - `/set-value`  
-  POST json:  
+  PUT json:  
   ```json
   {
     "username": "...",
@@ -26,7 +35,8 @@ The back end server is written in rust and interfaces with an sqlite database. I
   }
   ```
 - `/get-value`  
-  POST json:  
+  PUT json:  
+  Yields the plaintext value.
   ```json  
   {
     "username": "...",
@@ -34,7 +44,6 @@ The back end server is written in rust and interfaces with an sqlite database. I
     "key": "...",
   }
   ```
-  Yields the plaintext value.
 
 The database stores the salted password hashes and sessions associated with each user. Since this is a demo, entries that have been inactive for an hour get purposefully dropped.
 

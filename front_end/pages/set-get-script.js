@@ -24,7 +24,7 @@ function setButtonOnClick() {
     }
     if (!fieldsGood) { return; }
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/set-value');
+    xhr.open('PUT', '/set-value');
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = () => {
         if (xhr.status == 200) {
@@ -76,7 +76,7 @@ function getButtonOnClick() {
     }
     if (!fieldsGood) { return; }
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/get-value');
+    xhr.open('PUT', '/get-value');
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = () => {
         if (xhr.status == 200) {
