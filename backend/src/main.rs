@@ -211,6 +211,10 @@ async fn dropper(server_data: Data<ServerData>) {
         let conn = &mut server_data.conn.lock().unwrap();
         let mut stmt = conn.prepare_cached("
         DELETE FROM user_auth WHERE timestamp <= datetime('now', '-1 hours');
+        ").unwrap();
+        stmt.execute(()).unwrap();
+
+        stmt = conn.prepare_cached("
         DELETE FROM key_values WHERE timestamp <= datetime('now', '-1 hours');
         ").unwrap();
         stmt.execute(()).unwrap();
@@ -259,7 +263,7 @@ async fn main() -> std::io::Result<()> {
     )
     .unwrap();
 
-    // 6 prepared queries: create account, login, get, set, validate_session_token, dropper
+    // 7 prepared queries: create account, login, get, set, validate_session_token, dropper x 2
     conn.set_prepared_statement_cache_capacity(6);
 
     let db_connection = ServerData {

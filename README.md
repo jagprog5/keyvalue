@@ -55,7 +55,7 @@ The front end is JS, CSS, and HTML, statically served by nginx. It has three pag
 - create account page
 - set get page
 
-nginx also provides a TLS terminating ingress using a tls certificate verified via [let's encrypt](https://letsencrypt.org/).
+nginx also provides a TLS terminating ingress using [let's encrypt](https://letsencrypt.org/) as the cert authority.
 
 # Initialization Steps
 
