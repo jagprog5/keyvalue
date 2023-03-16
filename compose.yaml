@@ -11,14 +11,15 @@ services:
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/nginx/ssl/:ro
       - ./frontend/:/app/:ro
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
   certbot:
     image: certbot/certbot:latest
     volumes:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
-    # comment out entrypoint during initialization phase (mentioned in README)
-    # or else it will clash with the certbot creation command.
+    # comment out restart and entrypoint during initialization phase (mentioned in README)
     # uncomment during normal use
+    restart: always 
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
   db:
     restart: always

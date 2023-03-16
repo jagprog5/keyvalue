@@ -110,8 +110,11 @@ docker compose run --rm --entrypoint "\
     -out '/etc/letsencrypt/live/www.keyvalue.ca/fullchain.pem' \
     -subj '/CN=localhost'" certbot
 
-# --> comment out the certbot entrypoint of the compose file before running
-# see if you can access the site via local ip
+# at this point, comment out the restart and entrypoint for the certbot service in compose.yaml
+# the reason for this is certbot can only do one thing at a time, and will ignore any other calls below like "docker compose run --rm certbot ..."
+# just for the startup process, leave it commented out. then uncomment it at the end (mentioned again below).
+
+# check that the site is available via local ip
 docker compose up
 
 # leave compose running!
@@ -122,7 +125,10 @@ rm -rf certbot/conf/live/www.keyvalue.ca/
 docker compose run --rm certbot certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d www.keyvalue.ca
 # if it is successful, then remove --dry-run and do it again
 
-# now restart docker compose (and uncomment the certbot entrypoint) and the certificate will be used and renewed automatically
+# check if renewing works
+docker compose run --rm certbot renew --force-renew
+
+# now uncomment the certbot restart and entrypoint mentioned above, and restart docker compose
 ```
 
 # systemd
