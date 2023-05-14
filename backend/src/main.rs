@@ -264,7 +264,7 @@ async fn main() -> std::io::Result<()> {
     .unwrap();
 
     // 7 prepared queries: create account, login, get, set, validate_session_token, dropper x 2
-    conn.set_prepared_statement_cache_capacity(6);
+    conn.set_prepared_statement_cache_capacity(7);
 
     let db_connection = ServerData {
         conn: Mutex::new(conn),

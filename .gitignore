@@ -1,5 +1,7 @@
 secrets
 
+*.log
+
 # preserve empty folders with presence of empty .gitignore files
 certbot/*
 

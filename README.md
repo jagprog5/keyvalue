@@ -88,7 +88,7 @@ the A record points to the whc parking area (since they are not hosting the doma
 
 ### tls limitation
 
-Due to the fact that I don't want to upgrade to whc's [hosted](https://whc.ca/canadian-web-hosting) plan, there is a tls error under some very specific circumstances, only when typing the url with https and without www, and only noticable when using curl, or a browser on an iPhone, specifically.  
+Due to the fact that I don't want to upgrade to whc's [hosted](https://whc.ca/canadian-web-hosting) plan, there is a tls error under some very specific circumstances, only when typing the url with https and without www, and only noticable when using curl or some browsers.  
 e.g. `curl -vvv https://keyvalue.ca` will use whc's ssl certificate, which doesn't match keyvalue's name.  
 It's not worth it for me to pay for this functionality.
 
@@ -140,8 +140,8 @@ compose is wrapped as a systemd service
 
 [Unit]
 Description=keyvalue web app
-PartOf=docker.service
-After=docker.service
+PartOf=snap.docker.dockerd.service
+After=snap.docker.dockerd.service
 
 [Service]
 Type=oneshot
@@ -149,13 +149,16 @@ RemainAfterExit=true
 WorkingDirectory=/home/john/key_value
 ExecStart=/snap/bin/docker compose up -d --remove-orphans
 ExecStop=/snap/bin/docker compose down
+# optional for debugging
+StandardInput=null
+StandardOutput=file:/home/john/key_value/out.log
+StandardError=file:/home/john/key_value/error.log
 
 [Install]
 WantedBy=multi-user.target
-
 ```
 
 ```bash
 systemctl enable keyvalue-app.service
-systemctl start keyvalue-app.service
+systemctl start keyvalue-app.service # or reboot to ensure startup success
 ```
