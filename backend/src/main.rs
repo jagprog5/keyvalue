@@ -4,7 +4,7 @@ use std::env;
 use std::hash::{Hash, Hasher};
 
 // App, HttpResponse, HttpServer
-use actix_web::{post, put, web, web::Data, App, HttpResponse, HttpServer};
+use actix_web::{head, post, put, web, web::Data, App, HttpResponse, HttpServer};
 use serde::Deserialize;
 use std::sync::Mutex;
 use uuid::Uuid;
@@ -43,6 +43,21 @@ struct SetValueRequest {
     value: String,
 }
 
+#[head("/health")]
+async fn health(server_data: web::Data<ServerData>) -> HttpResponse {
+    // unique ref lock on database - ensures that something isn't stuck
+    // then do a dummy fast query
+    let conn = &mut server_data.conn.lock().unwrap();
+    let mut stmt = conn.prepare_cached("SELECT 1").unwrap();
+    let x = match stmt.query(()) {
+        Ok(_rows) => {
+            HttpResponse::Ok().finish()
+        },
+        Err(_) => HttpResponse::InternalServerError().finish(),
+    };
+    x
+}
+
 // if the username does not already exist,
 // then insert a new user, and return a session token (logged in)
 #[post("/create-account")]
@@ -59,10 +74,12 @@ async fn create_account(
     let session_token = uuid::Uuid::new_v4().to_string();
     let conn = &mut server_data.conn.lock().unwrap();
     let mut stmt = conn
-        .prepare_cached("
+        .prepare_cached(
+            "
             INSERT OR IGNORE INTO user_auth (username, password_hash, session_token)
-            VALUES (?, ?, ?)"
-        ).unwrap();
+            VALUES (?, ?, ?)",
+        )
+        .unwrap();
     match stmt.execute((
         request.username.as_str(),
         password_hash,
@@ -96,7 +113,9 @@ async fn login(
             "UPDATE user_auth
             SET session_token = ?, timestamp = CURRENT_TIMESTAMP
             WHERE username = ? AND password_hash = ?
-        ").unwrap();
+        ",
+        )
+        .unwrap();
     match stmt.execute((
         session_token_string.as_str(),
         request.username.as_str(),
@@ -105,7 +124,9 @@ async fn login(
         Err(_) => HttpResponse::InternalServerError().finish(),
         Ok(changes) => match changes {
             0 => HttpResponse::BadRequest().finish(),
-            1 => HttpResponse::Ok().content_type("text/plain").body(session_token_string),
+            1 => HttpResponse::Ok()
+                .content_type("text/plain")
+                .body(session_token_string),
             _ => HttpResponse::InternalServerError().finish(),
         },
     }
@@ -117,15 +138,16 @@ fn is_session_valid(
     username: &str,
     session_token: &SessionToken,
 ) -> Result<bool, rusqlite::Error> {
-    let mut stmt = conn.prepare_cached("
+    let mut stmt = conn
+        .prepare_cached(
+            "
         UPDATE user_auth
         SET timestamp = CURRENT_TIMESTAMP
         WHERE username = ? AND session_token = ?
-    ").unwrap();
-    match stmt.execute((
-        username,
-        session_token.to_string(),
-    )) {
+    ",
+        )
+        .unwrap();
+    match stmt.execute((username, session_token.to_string())) {
         Err(e) => Err(e),
         Ok(changes) => match changes {
             0 => Ok(false),
@@ -154,10 +176,12 @@ async fn set_value(
         Ok(true) => {
             let mut stmt = conn
                 // this refreshes the timestamp as well
-                .prepare_cached("
+                .prepare_cached(
+                    "
                     INSERT OR REPLACE INTO key_values (username, key, value)
                     VALUES(?, ?, ?)
-                ")
+                ",
+                )
                 .unwrap();
             match stmt.execute((
                 request.username.as_str(),
@@ -186,12 +210,16 @@ async fn get_value(
         Err(_) => HttpResponse::InternalServerError().finish(),
         Ok(false) => HttpResponse::BadRequest().finish(),
         Ok(true) => {
-            let mut stmt = conn.prepare_cached("
+            let mut stmt = conn
+                .prepare_cached(
+                    "
                 UPDATE key_values
                 SET timestamp = CURRENT_TIMESTAMP
                 WHERE username = ? and key = ?
                 RETURNING value
-            ").unwrap();
+            ",
+                )
+                .unwrap();
             match stmt.query_row((request.username.as_str(), request.key.as_str()), |row| {
                 Ok(row.get::<usize, String>(0).unwrap())
             }) {
@@ -209,14 +237,22 @@ async fn dropper(server_data: Data<ServerData>) {
     loop {
         interval.tick().await;
         let conn = &mut server_data.conn.lock().unwrap();
-        let mut stmt = conn.prepare_cached("
+        let mut stmt = conn
+            .prepare_cached(
+                "
         DELETE FROM user_auth WHERE timestamp <= datetime('now', '-1 hours');
-        ").unwrap();
+        ",
+            )
+            .unwrap();
         stmt.execute(()).unwrap();
 
-        stmt = conn.prepare_cached("
+        stmt = conn
+            .prepare_cached(
+                "
         DELETE FROM key_values WHERE timestamp <= datetime('now', '-1 hours');
-        ").unwrap();
+        ",
+            )
+            .unwrap();
         stmt.execute(()).unwrap();
     }
 }
@@ -230,6 +266,17 @@ async fn main() -> std::io::Result<()> {
             env::VarError::NotPresent => default_db_path,
             env::VarError::NotUnicode(_) => panic!("Not unicode DB_PATH env: {}", e),
         },
+    };
+
+    let default_port: u16 = 8080;
+    let port = match env::var("BIND_PORT") {
+        Ok(a) => {
+            a.parse::<u16>().expect("BIND_PORT u16 parse fail")
+        },
+        Err(e) => match e {
+            env::VarError::NotPresent => default_port,
+            env::VarError::NotUnicode(_) => panic!("Not unicode BIND_PORT env: {}", e),
+        }
     };
 
     let open_result = Connection::open(db_path);
@@ -263,8 +310,8 @@ async fn main() -> std::io::Result<()> {
     )
     .unwrap();
 
-    // 7 prepared queries: create account, login, get, set, validate_session_token, dropper x 2
-    conn.set_prepared_statement_cache_capacity(7);
+    // 8 prepared queries: create account, login, get, set, validate_session_token, dropper x 2, health check
+    conn.set_prepared_statement_cache_capacity(8);
 
     let db_connection = ServerData {
         conn: Mutex::new(conn),
@@ -272,16 +319,16 @@ async fn main() -> std::io::Result<()> {
     let server_data = Data::new(db_connection);
 
     tokio::spawn(dropper(server_data.clone()));
-
     HttpServer::new(move || {
         App::new()
             .app_data(server_data.clone())
+            .service(health)
             .service(login)
             .service(create_account)
             .service(set_value)
             .service(get_value)
     })
-    .bind("0.0.0.0:8080")?
+    .bind(("0.0.0.0", port))?
     .run()
     .await
 }

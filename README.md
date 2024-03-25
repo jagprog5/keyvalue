@@ -4,8 +4,10 @@ The server is self hosted and should be live at [keyvalue.ca](http://www.keyvalu
 
 # Back End
 
-The back end server is written in rust and interfaces with an sqlite database. It exposes four http endpoints:
+The back end server is written in rust and interfaces with an sqlite database. It exposes five http endpoints:
 
+- `/health`  
+  HEAD endpoint. gives ok on health check success, else internal server error.
 - `/create-account`  
   POST json:  
   Yields a session token. Same as if logging in.
@@ -69,6 +71,8 @@ This update is run by a cron script, and follows the instructions provided by th
 ```
 
 ## whc
+
+(in hindsight it's much better and easier to use cloudflare's dns api. todo migrate)
 
 I bought a domain via [web hosting canada](https://whc.ca/en) and used the following configs:
 
