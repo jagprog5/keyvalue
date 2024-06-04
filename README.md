@@ -144,19 +144,22 @@ compose is wrapped as a systemd service
 
 [Unit]
 Description=keyvalue web app
-PartOf=snap.docker.dockerd.service
+Requires=snap.docker.dockerd.service
 After=snap.docker.dockerd.service
+StartLimitIntervalSec=120
 
 [Service]
-Type=oneshot
-RemainAfterExit=true
 WorkingDirectory=/home/john/key_value
-ExecStart=/snap/bin/docker compose up -d --remove-orphans
+ExecStartPre=/bin/sleep 30
+ExecStart=/snap/bin/docker compose up --remove-orphans
 ExecStop=/snap/bin/docker compose down
+TimeoutStartSec=900
+Restart=on-failure
+StartLimitBurst=3
 # optional for debugging
-StandardInput=null
-StandardOutput=file:/home/john/key_value/out.log
-StandardError=file:/home/john/key_value/error.log
+# StandardInput=null
+# StandardOutput=file:/home/john/key_value/out.log
+# StandardError=file:/home/john/key_value/error.log
 
 [Install]
 WantedBy=multi-user.target
