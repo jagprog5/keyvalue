@@ -9,6 +9,8 @@ rusqlite = { version = "0.28.0", features = ["bundled"] }
 serde = { version = "1.0.152", features = ["derive"] }
 actix-web = "4.2.1"
 tokio = { version = "1.24.1", features = ["full"] }
+rand = "0.7.3"
+argon2 = "0.5.3"
 
 [dependencies.uuid]
 version = "1.2.2"

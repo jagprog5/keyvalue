@@ -1,19 +1,28 @@
 use rusqlite::Connection;
-use std::collections::hash_map::DefaultHasher;
 use std::env;
-use std::hash::{Hash, Hasher};
 
-// App, HttpResponse, HttpServer
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHasher, Salt, SaltString},
+    Argon2,
+};
+
 use actix_web::{head, post, put, web, web::Data, App, HttpResponse, HttpServer};
 use serde::Deserialize;
 use std::sync::Mutex;
 use uuid::Uuid;
 
-fn get_password_hash(pass: &str) -> i64 {
-    let mut hasher = DefaultHasher::new();
-    "bVWAj".hash(&mut hasher); // salt
-    pass.hash(&mut hasher);
-    hasher.finish() as i64 // sqlite int type
+// salt is generated per user per password
+fn gen_password_version() -> SaltString {
+    SaltString::generate(&mut OsRng)
+}
+
+fn password_digest(user: &str, pass: &str, salt: Salt) -> String {
+    let argon2 = Argon2::default();
+    let mut concat_result = user.to_owned();
+    concat_result += pass;
+    argon2
+        .hash_password(concat_result.as_bytes(), salt)
+        .unwrap().hash.unwrap().to_string()
 }
 
 struct ServerData {
@@ -50,9 +59,7 @@ async fn health(server_data: web::Data<ServerData>) -> HttpResponse {
     let conn = &mut server_data.conn.lock().unwrap();
     let mut stmt = conn.prepare_cached("SELECT 1").unwrap();
     let x = match stmt.query(()) {
-        Ok(_rows) => {
-            HttpResponse::Ok().finish()
-        },
+        Ok(_rows) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     };
     x
@@ -70,19 +77,26 @@ async fn create_account(
         return HttpResponse::PayloadTooLarge().finish();
     }
 
-    let password_hash = get_password_hash(&request.password);
+    let password_version = gen_password_version();
+    let password_digest = password_digest(
+        &request.username,
+        &request.password,
+        password_version.as_salt(),
+    );
+
     let session_token = uuid::Uuid::new_v4().to_string();
     let conn = &mut server_data.conn.lock().unwrap();
     let mut stmt = conn
         .prepare_cached(
             "
-            INSERT OR IGNORE INTO user_auth (username, password_hash, session_token)
-            VALUES (?, ?, ?)",
+            INSERT OR IGNORE INTO user_auth (username, password_version, password_hash, session_token)
+            VALUES (?, ?, ?, ?)",
         )
         .unwrap();
     match stmt.execute((
         request.username.as_str(),
-        password_hash,
+        password_version.as_str(),
+        password_digest.as_str(),
         session_token.as_str(),
     )) {
         Err(_) => HttpResponse::InternalServerError().finish(),
@@ -105,9 +119,33 @@ async fn login(
         return HttpResponse::PayloadTooLarge().finish();
     }
 
-    let password_hash = get_password_hash(&request.password);
     let session_token_string = uuid::Uuid::new_v4().to_string();
     let conn = &mut server_data.conn.lock().unwrap();
+
+    // first retrieve the salt
+    let mut get_salt_stmt = conn
+        .prepare_cached(
+            "
+        SELECT password_version from user_auth WHERE username = ?
+    ",
+        )
+        .unwrap();
+
+    let password_version = match get_salt_stmt.query_row(
+        (request.username.as_str(),),
+        |row| Ok(row.get::<usize, String>(0).unwrap()),
+    ) {
+        Err(rusqlite::Error::QueryReturnedNoRows) => return HttpResponse::BadRequest().finish(),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Ok(val) => val,
+    };
+    let password_version_as_salt = Salt::from_b64(&password_version).unwrap();
+    let password_digest = password_digest(
+        &request.username,
+        &request.password,
+        password_version_as_salt,
+    );
+
     let mut stmt = conn
         .prepare_cached(
             "UPDATE user_auth
@@ -119,7 +157,7 @@ async fn login(
     match stmt.execute((
         session_token_string.as_str(),
         request.username.as_str(),
-        password_hash,
+        password_digest,
     )) {
         Err(_) => HttpResponse::InternalServerError().finish(),
         Ok(changes) => match changes {
@@ -195,7 +233,7 @@ async fn set_value(
     }
 }
 
-// checks session validity, returns the appropriate value, updating the timestamps
+// checks session validity, returns the appropriate value
 #[put("/get-value")]
 async fn get_value(
     server_data: web::Data<ServerData>,
@@ -213,10 +251,7 @@ async fn get_value(
             let mut stmt = conn
                 .prepare_cached(
                     "
-                UPDATE key_values
-                SET timestamp = CURRENT_TIMESTAMP
-                WHERE username = ? and key = ?
-                RETURNING value
+                SELECT value FROM key_values WHERE username = ? and key = ?
             ",
                 )
                 .unwrap();
@@ -235,25 +270,40 @@ async fn dropper(server_data: Data<ServerData>) {
     use tokio::time::{self, Duration};
     let mut interval = time::interval(Duration::from_secs(60));
     loop {
-        interval.tick().await;
+        interval.tick().await; // first tick completes immediately
         let conn = &mut server_data.conn.lock().unwrap();
         let mut stmt = conn
             .prepare_cached(
                 "
-        DELETE FROM user_auth WHERE timestamp <= datetime('now', '-1 hours');
+        SELECT username FROM user_auth WHERE timestamp <= datetime('now', '-1 hours')
         ",
             )
             .unwrap();
-        stmt.execute(()).unwrap();
 
-        stmt = conn
-            .prepare_cached(
-                "
-        DELETE FROM key_values WHERE timestamp <= datetime('now', '-1 hours');
-        ",
-            )
-            .unwrap();
-        stmt.execute(()).unwrap();
+        stmt.query_map([], |row| row.get(0))
+            .unwrap()
+            .filter_map(Result::ok)
+            .for_each(|old_user: String| {
+                // delete the corresponding keyvalues for that user.
+                let mut delete_key_values = conn
+                    .prepare_cached(
+                        "
+                    DELETE FROM key_values WHERE username = ?
+                    ",
+                    )
+                    .unwrap();
+                delete_key_values.execute([old_user.clone()]).unwrap();
+
+                // delete the user
+                let mut delete_user_stmt = conn
+                    .prepare_cached(
+                        "
+                    DELETE FROM user_auth WHERE username = ?
+                    ",
+                    )
+                    .unwrap();
+                delete_user_stmt.execute([old_user]).unwrap();
+            });
     }
 }
 
@@ -270,13 +320,11 @@ async fn main() -> std::io::Result<()> {
 
     let default_port: u16 = 8080;
     let port = match env::var("BIND_PORT") {
-        Ok(a) => {
-            a.parse::<u16>().expect("BIND_PORT u16 parse fail")
-        },
+        Ok(a) => a.parse::<u16>().expect("BIND_PORT u16 parse fail"),
         Err(e) => match e {
             env::VarError::NotPresent => default_port,
             env::VarError::NotUnicode(_) => panic!("Not unicode BIND_PORT env: {}", e),
-        }
+        },
     };
 
     let open_result = Connection::open(db_path);
@@ -290,28 +338,31 @@ async fn main() -> std::io::Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS user_auth (
             username TEXT PRIMARY KEY NOT NULL,
-            password_hash INTEGER,
-            session_token TEXT NOT NULL,
+            password_version TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            session_token TEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
-        ) WITHOUT ROWID;",
+        ) WITHOUT ROWID",
         (),
     )
     .unwrap();
+
+    // blank out sessions on boot
+    conn.execute("UPDATE user_auth SET session_token = NULL", ())
+        .unwrap();
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS key_values (
             username TEXT NOT NULL,
             key TEXT NOT NULL,
             value TEXT NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
             PRIMARY KEY (username, key)
-        ) WITHOUT ROWID;",
+        ) WITHOUT ROWID",
         (),
     )
     .unwrap();
 
-    // 8 prepared queries: create account, login, get, set, validate_session_token, dropper x 2, health check
-    conn.set_prepared_statement_cache_capacity(8);
+    conn.set_prepared_statement_cache_capacity(100); // enough to contain everything
 
     let db_connection = ServerData {
         conn: Mutex::new(conn),
