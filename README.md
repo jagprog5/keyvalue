@@ -4,7 +4,10 @@ The server is self hosted and should be live at [keyvalue.ca](http://www.keyvalu
 
 # Back End
 
-The back end server is written in rust and interfaces with an sqlite database. It exposes five http endpoints:
+The back end server is written in rust and interfaces with an sqlite database. It exposes five http endpoints.
+
+(in hindsight, basic auth headers should be used instead of using the body content).
+
 
 - `/health`  
   HEAD endpoint. gives ok on health check success, else internal server error.
@@ -47,7 +50,7 @@ The back end server is written in rust and interfaces with an sqlite database. I
   }
   ```
 
-The database stores the salted password hashes and sessions associated with each user. Since this is a demo, entries that have been inactive for an hour get purposefully dropped.
+The database stores the salted password hashes and sessions associated with each user. Since this is a demo, entries that have been inactive for an hour are deleted.
 
 # Front End
 
@@ -144,17 +147,17 @@ compose is wrapped as a systemd service
 
 [Unit]
 Description=keyvalue web app
-Requires=snap.docker.dockerd.service
-After=snap.docker.dockerd.service
+Requires=docker.service
+After=docker.service
 StartLimitIntervalSec=120
 
 [Service]
 WorkingDirectory=/home/john/key_value
 ExecStartPre=/bin/sleep 30
-ExecStart=/snap/bin/docker compose up --remove-orphans
-ExecStop=/snap/bin/docker compose down
+ExecStart=/usr/bin/docker compose up --remove-orphans
+ExecStop=/usr/bin/docker compose down
 TimeoutStartSec=900
-Restart=on-failure
+Restart=always
 StartLimitBurst=3
 # optional for debugging
 # StandardInput=null
