@@ -16,12 +16,16 @@ fn gen_password_version() -> SaltString {
     SaltString::generate(&mut OsRng)
 }
 
-fn password_digest(user: &str, pass: &str, salt: Salt) -> String {
+fn password_digest(user: &str, pass: &str, pass_version: Salt) -> String {
     let argon2 = Argon2::default();
     let mut concat_result = user.to_owned();
     concat_result += pass;
+    // argon2 can accept any length of input. this is unlike bcrypt, which
+    // silently truncates if greater than 72 bytes long. there was a recent Okta
+    // security incident related to this:
+    // https://n0rdy.foo/posts/20250121/okta-bcrypt-lessons-for-better-apis/
     argon2
-        .hash_password(concat_result.as_bytes(), salt)
+        .hash_password(concat_result.as_bytes(), pass_version)
         .unwrap().hash.unwrap().to_string()
 }
 
