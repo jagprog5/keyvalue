@@ -1,6 +1,6 @@
 # Key Value Server
 
-The server is self hosted and should be live at [keyvalue.ca](http://www.keyvalue.ca).
+The server is self hosted ~~and should be live at [keyvalue.ca](http://www.keyvalue.ca).~~
 
 # Back End
 

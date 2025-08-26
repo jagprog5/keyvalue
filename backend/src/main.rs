@@ -175,6 +175,9 @@ async fn login(
 }
 
 // if the session is valid, then returns true and update the timestamp
+//
+// TODO in hindsight, this query can be improved with a JOIN. authentication and
+// get/set can happen as a single query
 fn is_session_valid(
     conn: &mut Connection,
     username: &str,
